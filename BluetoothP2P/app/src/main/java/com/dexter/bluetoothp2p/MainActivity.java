@@ -1,5 +1,7 @@
 package com.dexter.bluetoothp2p;
 
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
@@ -55,6 +57,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     boolean isBluetoothOn;
     private static final String TAG = "MainActivity";
     private final static UUID uuid = UUID.fromString("2cc9ec17-8fd3-4e10-a28a-4be8383a9737");
+    private static final int DIALOG_DOWNLOAD_PROGRESS = 1;
+    ProgressDialog mProgressDialog = null;
     String path ;
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -82,8 +86,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             Log.d(TAG,"Already Paired");
                             BluetoothDevice bluetoothDevice = bdDevice;
                             // Initiate a connection request in a separate thread
-                            ConnectingThread t = new ConnectingThread(bluetoothDevice);
-                            t.start();
+//                            ConnectingThread t = new ConnectingThread(bluetoothDevice);
+//                            t.start();
                             break;
                         }
                     }
@@ -205,6 +209,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         public void run() {
                             Toast.makeText(getApplicationContext(), "A connection has been accepted.",
                                     Toast.LENGTH_SHORT).show();
+                            showDialog(DIALOG_DOWNLOAD_PROGRESS);
+
                         }
                     });
                     ClientRxThread clientRxThread = new ClientRxThread(bluetoothSocket);
@@ -224,110 +230,110 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     }
-    private class ConnectingThread extends Thread {
-        private final BluetoothSocket bluetoothSocket;
-        private final BluetoothDevice bluetoothDevice;
-
-        public ConnectingThread(BluetoothDevice device) {
-
-            BluetoothSocket temp = null;
-            bluetoothDevice = device;
-
-            // Get a BluetoothSocket to connect with the given BluetoothDevice
-            try {
-                temp = bluetoothDevice.createRfcommSocketToServiceRecord(uuid);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            bluetoothSocket = temp;
-        }
-
-        public void run() {
-            // Cancel any discovery as it will slow down the connection
-            bluetoothAdapter.cancelDiscovery();
-
-            try {
-                // This will block until it succeeds in connecting to the device
-                // through the bluetoothSocket or throws an exception
-                bluetoothSocket.connect();
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), "Connection Established",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                });
-                FileTxThread fileTxThread = new FileTxThread(bluetoothSocket);
-                fileTxThread.start();
-            } catch (IOException connectException) {
-                connectException.printStackTrace();
-                try {
-                    bluetoothSocket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            // Code to manage the connection in a separate thread
-        /*
-            manageBluetoothConnection(bluetoothSocket);
-        */
-        }
-
-        // Cancel an open connection and terminate the thread
-        public void cancel() {
-            try {
-                bluetoothSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-    public class FileTxThread extends Thread {
-        BluetoothSocket socket;
-
-        FileTxThread(BluetoothSocket socket){
-            this.socket= socket;
-        }
-
-        @Override
-        public void run() {
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+ "/test.txt");
-//            if(file.exists()){
-//                Log.d(TAG,"File exists");
-//            }else{
-//                Log.e(TAG,"PAth : " + path);
+    //    private class ConnectingThread extends Thread {
+//        private final BluetoothSocket bluetoothSocket;
+//        private final BluetoothDevice bluetoothDevice;
+//
+//        public ConnectingThread(BluetoothDevice device) {
+//
+//            BluetoothSocket temp = null;
+//            bluetoothDevice = device;
+//
+//            // Get a BluetoothSocket to connect with the given BluetoothDevice
+//            try {
+//                temp = bluetoothDevice.createRfcommSocketToServiceRecord(uuid);
+//            } catch (IOException e) {
+//                e.printStackTrace();
 //            }
-//            Log.d(TAG,"file : " + file.getAbsolutePath() +" " + "server" + " " + file.length());
-            byte[] bytes = new byte[(int) file.length()];
-            BufferedInputStream bis;
-            try {
-                bis = new BufferedInputStream(new FileInputStream(file));
-                Log.d(TAG,"" + bis.read(bytes, 0, bytes.length));
-                OutputStream os = socket.getOutputStream();
-                os.write(bytes, 0, bytes.length);
-                os.flush();
-
-                final String sentMsg = "File sent to: " + socket.getRemoteDevice().getAddress() +  " " + socket.getRemoteDevice().getName();
-                MainActivity.this.runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity.this,
-                                sentMsg,
-                                Toast.LENGTH_LONG).show();
-                    }});
-
-
-            } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-
-        }
-    }
+//            bluetoothSocket = temp;
+//        }
+//
+//        public void run() {
+//            // Cancel any discovery as it will slow down the connection
+//            bluetoothAdapter.cancelDiscovery();
+//
+//            try {
+//                // This will block until it succeeds in connecting to the device
+//                // through the bluetoothSocket or throws an exception
+//                bluetoothSocket.connect();
+//                runOnUiThread(new Runnable() {
+//                    public void run() {
+//                        Toast.makeText(getApplicationContext(), "Connection Established",
+//                                Toast.LENGTH_SHORT).show();
+//                    }
+//                });
+//                FileTxThread fileTxThread = new FileTxThread(bluetoothSocket);
+//                fileTxThread.start();
+//            } catch (IOException connectException) {
+//                connectException.printStackTrace();
+//                try {
+//                    bluetoothSocket.close();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//
+//            // Code to manage the connection in a separate thread
+//        /*
+//            manageBluetoothConnection(bluetoothSocket);
+//        */
+//        }
+//
+//        // Cancel an open connection and terminate the thread
+//        public void cancel() {
+//            try {
+//                bluetoothSocket.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
+//    public class FileTxThread extends Thread {
+//        BluetoothSocket socket;
+//
+//        FileTxThread(BluetoothSocket socket){
+//            this.socket= socket;
+//        }
+//
+//        @Override
+//        public void run() {
+//            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+ "/test.txt");
+////            if(file.exists()){
+////                Log.d(TAG,"File exists");
+////            }else{
+////                Log.e(TAG,"PAth : " + path);
+////            }
+////            Log.d(TAG,"file : " + file.getAbsolutePath() +" " + "server" + " " + file.length());
+//            byte[] bytes = new byte[(int) file.length()];
+//            BufferedInputStream bis;
+//            try {
+//                bis = new BufferedInputStream(new FileInputStream(file));
+//                Log.d(TAG,"" + bis.read(bytes, 0, bytes.length));
+//                OutputStream os = socket.getOutputStream();
+//                os.write(bytes, 0, bytes.length);
+//                os.flush();
+//
+//                final String sentMsg = "File sent to: " + socket.getRemoteDevice().getAddress() +  " " + socket.getRemoteDevice().getName();
+//                MainActivity.this.runOnUiThread(new Runnable() {
+//
+//                    @Override
+//                    public void run() {
+//                        Toast.makeText(MainActivity.this,
+//                                sentMsg,
+//                                Toast.LENGTH_LONG).show();
+//                    }});
+//
+//
+//            } catch (FileNotFoundException e) {
+//                // TODO Auto-generated catch block
+//                e.printStackTrace();
+//            } catch (IOException e) {
+//                // TODO Auto-generated catch block
+//                e.printStackTrace();
+//            }
+//
+//        }
+//    }
     public class ClientRxThread extends Thread {
 
         BluetoothSocket socket;
@@ -390,9 +396,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 "Finished",
                                 Toast.LENGTH_LONG).show();
                     }});
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        if(mProgressDialog != null && mProgressDialog.isShowing()) {
+                            mProgressDialog.dismiss();
+                        }
+                    }
+                });
+
 
             } catch (IOException e) {
-
+                dismissDialog(DIALOG_DOWNLOAD_PROGRESS);
                 e.printStackTrace();
 
                 final String eMsg = "Something wrong: " + e.getMessage();
@@ -406,6 +420,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }});
 
             }
+        }
+    }
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        switch (id) {
+            case DIALOG_DOWNLOAD_PROGRESS:
+                mProgressDialog = new ProgressDialog(this);
+                mProgressDialog.setMessage("Receiving");
+                mProgressDialog.setIndeterminate(true);
+                mProgressDialog.setCancelable(false);
+                mProgressDialog.show();
+                return mProgressDialog;
+            default:
+                return null;
         }
     }
 }
