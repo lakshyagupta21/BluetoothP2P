@@ -54,13 +54,18 @@ public class InstanceSendTask extends AsyncTask<Long, Integer, String>{
 
     @Override
     protected void onPostExecute(String s) {
-        Log.e("onPostExecute",s);
         stateListener.uploadingComplete(s);
         try {
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    protected void onCancelled() {
+        super.onCancelled();
+        stateListener.onCancel();
     }
 
     private boolean processSelectedFiles(Long ids[]){
@@ -76,13 +81,11 @@ public class InstanceSendTask extends AsyncTask<Long, Integer, String>{
 
         selectionBuf.append(")");
         String selection = selectionBuf.toString();
-        Log.e("SELECTION " , selection);
         Cursor c = null;
         try {
             c = new InstancesDao().getInstancesCursor(selection, selectionArgs);
 
             if (c != null && c.getCount() > 0) {
-                Log.e("Cursor",c.getCount()+"");
                 OutputStream os = socket.getOutputStream();
                 DataOutputStream dos = new DataOutputStream(os);
                 dos.writeInt(c.getCount());
@@ -94,13 +97,16 @@ public class InstanceSendTask extends AsyncTask<Long, Integer, String>{
                             c.getColumnIndex(InstanceProviderAPI.InstanceColumns.INSTANCE_FILE_PATH));
                     String id = c.getString(c.getColumnIndex(InstanceProviderAPI.InstanceColumns._ID));
                     if(!sendInstance(instance)){
-                        Log.e("INSTANCE" , instance);
                        return false;
                     }
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
+            if (c != null) {
+                c.close();
+            }
+            return false;
         } finally {
             if (c != null) {
                 c.close();
@@ -150,9 +156,7 @@ public class InstanceSendTask extends AsyncTask<Long, Integer, String>{
         }
         return true;
     }
-    boolean uploadOneFile(List<File> files){
-        Log.e("Files",files.size()+"");
-//        Log.d(TAG,"file : " + file.getAbsolutePath() +" " + "server" + " " + file.length());
+    boolean uploadOneFile(List<File> files) {
         byte[] bytes = new byte[4096];
         try {
             int read = 0;

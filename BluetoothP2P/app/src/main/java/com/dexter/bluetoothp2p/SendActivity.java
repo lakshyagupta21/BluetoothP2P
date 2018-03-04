@@ -44,13 +44,14 @@ public class SendActivity extends AppCompatActivity implements ProgressListener,
     private String alertMsg;
 
     ListView detectedDevices;
-    Button buttonSearch,buttonOn;
+    Button buttonSearch, buttonOn;
     ArrayAdapter<String> detectedAdapter;
     BluetoothDevice bdDevice;
     BluetoothAdapter bluetoothAdapter = null;
     ArrayList<BluetoothDevice> arrayListBluetoothDevices = null;
     boolean isBluetoothOn;
     private Long[] instancesToSend;
+    boolean registeredReceiver;
 
 
     @Override
@@ -58,10 +59,8 @@ public class SendActivity extends AppCompatActivity implements ProgressListener,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_send);
         long ids[] = getIntent().getLongArrayExtra("data");
-        Log.e("SIZE", ids.length+"");
         instancesToSend = new Long[ids.length];
-        for(int i = 0; i < ids.length; i++){
-            Log.e("ITEM", ids[i]+"");
+        for (int i = 0; i < ids.length; i++) {
             instancesToSend[i] = ids[i];
         }
 
@@ -79,22 +78,24 @@ public class SendActivity extends AppCompatActivity implements ProgressListener,
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 bdDevice = arrayListBluetoothDevices.get(i);
-                Set<BluetoothDevice> pairedDevice = bluetoothAdapter.getBondedDevices();
-                if(pairedDevice.size()>0)
-                {
-                    for(BluetoothDevice device : pairedDevice)
-                    {
-                        if(device.equals(bdDevice)) {
-                            Log.d(TAG,"Already Paired");
-                            BluetoothDevice bluetoothDevice = bdDevice;
-                            // Initiate a connection request in a separate thread
-                            showDialog(PROGRESS_DIALOG);
-                            ConnectingThread t = new ConnectingThread(bluetoothDevice);
-                            t.start();
-                            break;
-                        }
-                    }
-                }
+//                Set<BluetoothDevice> pairedDevice = bluetoothAdapter.getBondedDevices();
+//                if (pairedDevice.size() > 0) {
+//                    for (BluetoothDevice device : pairedDevice) {
+//                        if (device.equals(bdDevice)) {
+//                            Log.d(TAG, "Already Paired");
+//                            BluetoothDevice bluetoothDevice = bdDevice;
+//                            // Initiate a connection request in a separate thread
+//                            showDialog(PROGRESS_DIALOG);
+//                            ConnectingThread t = new ConnectingThread(bluetoothDevice);
+//                            t.start();
+//                            break;
+//                        }
+//                    }
+//                }
+                showDialog(PROGRESS_DIALOG);
+                ConnectingThread t = new ConnectingThread(bdDevice);
+                t.start();
+
             }
         });
 
@@ -103,6 +104,7 @@ public class SendActivity extends AppCompatActivity implements ProgressListener,
         detectedAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_single_choice);
         detectedDevices.setAdapter(detectedAdapter);
         detectedAdapter.notifyDataSetChanged();
+
         if (!bluetoothAdapter.isEnabled()) {
             buttonOn.setText("Bluetooth On");
         } else {
@@ -114,7 +116,12 @@ public class SendActivity extends AppCompatActivity implements ProgressListener,
     @Override
     protected void onStop() {
         super.onStop();
-        unregisterReceiver(myReceiver);
+        if(registeredReceiver) {
+            unregisterReceiver(myReceiver);
+        }
+        if (progressDialog != null && progressDialog.isShowing() ){
+            progressDialog.dismiss();
+        }
     }
 
     @Override
@@ -124,12 +131,18 @@ public class SendActivity extends AppCompatActivity implements ProgressListener,
         } catch (Exception e) {
             // tried to close a dialog not open. don't care.
         }
+        Toast.makeText(this,"Files sent",Toast.LENGTH_LONG).show();
     }
 
     @Override
     public void progressUpdate(int progress, int total) {
         alertMsg = "Sending form " + String.valueOf(progress) + " of " + String.valueOf(total);
         progressDialog.setMessage(alertMsg);
+    }
+
+    @Override
+    public void onCancel() {
+        dismissDialog(PROGRESS_DIALOG);
     }
 
     @Override
@@ -142,12 +155,12 @@ public class SendActivity extends AppCompatActivity implements ProgressListener,
                 progressDialog.setIndeterminate(true);
                 progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
                 progressDialog.setCancelable(false);
-                //progressDialog.setButton(getString(R.string.cancel), loadingButtonListener);
                 return progressDialog;
         }
 
         return null;
     }
+
 
     @Override
     public void onClick(View view) {
@@ -156,19 +169,20 @@ public class SendActivity extends AppCompatActivity implements ProgressListener,
                 if (isBluetoothOn) {
                     offBluetooth();
                     buttonOn.setText("Bluetooth On");
-                }
-                else {
+                } else {
                     onBluetooth();
                     buttonOn.setText("Bluetooth Off");
                 }
                 break;
             case R.id.search:
                 arrayListBluetoothDevices.clear();
+                detectedAdapter.clear();
                 detectedAdapter.notifyDataSetChanged();
                 startSearch();
                 break;
         }
     }
+
     private void startSearch() {
         Log.d(TAG, "Search Started");
         IntentFilter intentFilter = new IntentFilter();
@@ -176,17 +190,19 @@ public class SendActivity extends AppCompatActivity implements ProgressListener,
         intentFilter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         intentFilter.addAction(BluetoothDevice.ACTION_FOUND);
 
+        registeredReceiver = true;
         registerReceiver(myReceiver, intentFilter);
         bluetoothAdapter.startDiscovery();
     }
 
     private void onBluetooth() {
-        if(!bluetoothAdapter.isEnabled()){
+        if (!bluetoothAdapter.isEnabled()) {
             bluetoothAdapter.enable();
         }
     }
+
     private void offBluetooth() {
-        if(bluetoothAdapter.isEnabled()){
+        if (bluetoothAdapter.isEnabled()) {
             bluetoothAdapter.disable();
         }
     }
@@ -195,25 +211,22 @@ public class SendActivity extends AppCompatActivity implements ProgressListener,
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if(BluetoothDevice.ACTION_FOUND.equals(action)){
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 boolean flag = true;    // flag to indicate that particular device is already in the arlist or not
-                for(int i = 0; i<arrayListBluetoothDevices.size();i++)
-                {
-                    if(device.getAddress().equals(arrayListBluetoothDevices.get(i).getAddress()))
-                    {
+                for (int i = 0; i < arrayListBluetoothDevices.size(); i++) {
+                    if (device.getAddress().equals(arrayListBluetoothDevices.get(i).getAddress())) {
                         flag = false;
                     }
                 }
-                if(flag == true)
-                {
-                    detectedAdapter.add(device.getName()+"\n"+device.getAddress());
+                if (flag == true) {
+                    detectedAdapter.add(device.getName() + "\n" + device.getAddress());
                     arrayListBluetoothDevices.add(device);
                     detectedAdapter.notifyDataSetChanged();
                 }
-            }else if(BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)){
+            } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
 
-            }else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)){
+            } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
 
             }
         }
@@ -241,44 +254,47 @@ public class SendActivity extends AppCompatActivity implements ProgressListener,
             // Cancel any discovery as it will slow down the connection
             bluetoothAdapter.cancelDiscovery();
 
+            // This will block until it succeeds in connecting to the device
+            // through the bluetoothSocket or throws an exception
             try {
-                // This will block until it succeeds in connecting to the device
-                // through the bluetoothSocket or throws an exception
+                bluetoothSocket.connect();
+            } catch (IOException e) {
                 try {
+                    Log.i(TAG, "Trying fallback...");
+                    bluetoothSocket = (BluetoothSocket) bluetoothDevice.getClass().getMethod("createRfcommSocket",
+                            new Class[]{int.class}).invoke(bluetoothDevice, 1);
                     bluetoothSocket.connect();
-                }catch(IOException e) {
-                    bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(Constants.uuid);
-                    bluetoothSocket.connect();
-                }
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), "Connection Established",
-                                Toast.LENGTH_SHORT).show();
+                    Log.i(TAG, "Connected");
+                } catch (Exception e2) {
+                    Log.e(TAG, "Couldn't establish Bluetooth connection!");
+                    try {
+                        bluetoothSocket.close();
+                    } catch (IOException e3) {
+                        Log.e(TAG, "unable to close() socket during connection failure", e3);
                     }
-                });
-                if (task == null) {
-                    // setup dialog and upload task
-                    task = new InstanceSendTask(bluetoothSocket);
-
-                    // register this activity with the new uploader task
-                    task.setUploaderListener(SendActivity.this);
-                    task.execute(instancesToSend);
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), "Couldn't establish Connection Check Server",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    return;
                 }
-            } catch (IOException connectException) {
-                connectException.printStackTrace();
-
-                try {
-                    bluetoothSocket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                dismissDialog(PROGRESS_DIALOG);
             }
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "Connection Established",
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+            if (task == null) {
+                // setup dialog and upload task
+                task = new InstanceSendTask(bluetoothSocket);
 
-            // Code to manage the connection in a separate thread
-        /*
-            manageBluetoothConnection(bluetoothSocket);
-        */
+                // register this activity with the new uploader task
+                task.setUploaderListener(SendActivity.this);
+                task.execute(instancesToSend);
+            }
         }
 
         // Cancel an open connection and terminate the thread

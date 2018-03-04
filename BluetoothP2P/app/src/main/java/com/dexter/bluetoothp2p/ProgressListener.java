@@ -7,4 +7,5 @@ package com.dexter.bluetoothp2p;
 public interface ProgressListener {
     void uploadingComplete(String result);
     void progressUpdate(int progress, int total);
+    void onCancel();
 }

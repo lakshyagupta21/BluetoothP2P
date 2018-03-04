@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class BluetoothActivity extends AppCompatActivity implements View.OnClickListener {
@@ -250,13 +251,16 @@ public class BluetoothActivity extends AppCompatActivity implements View.OnClick
 
         @Override
         public void run() {
+            int file_no;
+            List<File> fileList = new ArrayList<>();
             try {
                 DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
                 int num = dis.readInt();
                 Log.e("Number of forms" , num + " ");
                 while (num-- > 0) {
-                    int file_no = dis.readInt();
+                    file_no = dis.readInt();
                     Log.e("FILE ", file_no+"");
+                    fileList.clear();
                     while(file_no-- > 0) {
                         String filename = dis.readUTF();
                         long fileSize = dis.readLong();
@@ -270,6 +274,7 @@ public class BluetoothActivity extends AppCompatActivity implements View.OnClick
                             fileSize -= n;
                         }
                         fos.close();
+                        fileList.add(newFile);
                         Log.d("File created", filename);
                     }
                 }
@@ -305,6 +310,11 @@ public class BluetoothActivity extends AppCompatActivity implements View.OnClick
                                 Toast.LENGTH_LONG).show();
                     }
                 });
+                // Connection Interrupted
+                // Make sure to remove each resource for forms which are received incomplete
+                for(File file : fileList){
+                    Log.d(TAG,"==Delete " + file.getName() + " " + file.delete());
+                }
             }finally {
                 try {
                     socket.close();
