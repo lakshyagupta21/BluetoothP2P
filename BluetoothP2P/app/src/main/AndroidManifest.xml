@@ -2,11 +2,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.dexter.bluetoothp2p">
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <!-- wifi permissions -->
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".Supervisor"
@@ -26,10 +34,21 @@
         <activity android:name=".BluetoothActivity" />
         <activity android:name=".SendActivity">
             <intent-filter>
-                <action android:name="com.dexter.bluetoothp2p.action_send" />
+                <action android:name="com.dexter.bluetoothp2p.action_sendbluetooth" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity android:name=".wifi.HotspotActivity">
+            <intent-filter>
+                <action android:name="com.dexter.bluetoothp2p.action_sendwifiHotspot" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".wifi.WifiActivity" />
+        <activity android:name=".testing.Activity1" />
+        <activity android:name=".testing.Activity2"></activity>
     </application>
 
 </manifest>

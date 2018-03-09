@@ -1,6 +1,7 @@
 package com.dexter.bluetoothp2p;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -16,6 +17,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+import com.dexter.bluetoothp2p.wifi.HotspotActivity;
+import com.dexter.bluetoothp2p.wifi.WifiActivity;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -122,18 +125,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         int id = view.getId();
-        Intent intent ;
-        switch(id) {
+        Intent intent;
+        switch (id) {
             case R.id.bBluetooth:
-                intent = new Intent(MainActivity.this,BluetoothActivity.class);
+                intent = new Intent(MainActivity.this, BluetoothActivity.class);
                 startActivity(intent);
                 break;
             case R.id.bWifi:
-                intent = new Intent(Intent.ACTION_VIEW);
-                intent.setType("vnd.android.cursor.dir/vnd.odk.instance");
-                startActivityForResult(intent, PICK_FORM_REQUEST);
+                intent = new Intent(MainActivity.this, WifiActivity.class);
+                startActivity(intent);
                 break;
-            case R.id.bNfc:
+//            case R.id.bNfc:
+//                intent = new Intent(MainActivity.this, WifiActivity.class);
+//                startActivity(intent);
 
         }
     }
@@ -191,13 +195,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } else {
                 finish();
             }
-        }else if (requestCode == PICK_FORM_REQUEST) {
+        } else if (requestCode == PICK_FORM_REQUEST) {
             // Make sure the request was successful
             if (resultCode == RESULT_OK) {
                 // The Intent's data URI identifies which form was selected.
                 Uri formUri = data.getData();
                 // Do something with the form here
-                Log.e(TAG,"URI : " + formUri);
+                Log.e(TAG, "URI : " + formUri);
             }
         }
     }
