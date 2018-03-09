@@ -30,27 +30,16 @@ import android.widget.Toast;
 import com.dexter.bluetoothp2p.R;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.sql.ConnectionPoolDataSource;
 
 import static com.dexter.bluetoothp2p.wifi.HotspotActivity.SocketServerPORT;
 
@@ -89,10 +78,8 @@ public class WifiActivity extends AppCompatActivity implements View.OnClickListe
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // Item clicked, Connect network
                 ScanResult result = results.get(position);
                 String ssid = result.SSID;
-                Log.d(TAG, "Clicked on " + ssid + " " + isOpen(result));
                 if (ssid.equals("NewSSID") && isOpen(result)) {
                     // hard coded SSID need to change or make something like which remains unique for this app
                     Log.d(TAG, "Connecting to " + ssid);
@@ -198,7 +185,6 @@ public class WifiActivity extends AppCompatActivity implements View.OnClickListe
         public void onReceive(Context c, Intent intent) {
             buttonScan.setEnabled(true);
             buttonScan.setText("Scan");
-            Log.d("WifScanner", "onReceive");
             results = wifiManager.getScanResults();
             unregisterReceiver(this);
             for (int i = 0; i < results.size(); i++) {
@@ -229,162 +215,9 @@ public class WifiActivity extends AppCompatActivity implements View.OnClickListe
             dstPort = port;
         }
 
-//        @Override
-//        public void run() {
-//
-//            Socket socket = null;
-//
-//            try {
-//                socket = new Socket(dstAddress, dstPort);
-//                WifiActivity.this.runOnUiThread(new Runnable() {
-//
-//                    @Override
-//                    public void run() {
-//                        showDialog(DIALOG_DOWNLOAD_PROGRESS);
-//                    }
-//                });
-//                File file = new File(
-//                        Environment.getExternalStorageDirectory(),
-//                        "test.txt");
-//
-//                byte[] bytes = new byte[4096];
-//                InputStream is = socket.getInputStream();
-//                FileOutputStream fos = new FileOutputStream(file);
-//                BufferedOutputStream bos = new BufferedOutputStream(fos);
-//                int bytesRead = is.read(bytes, 0, bytes.length);
-//                bos.write(bytes, 0, bytesRead);
-//                bos.close();
-//                socket.close();
-//
-//                WifiActivity.this.runOnUiThread(new Runnable() {
-//
-//                    @Override
-//                    public void run() {
-//                        Toast.makeText(WifiActivity.this,
-//                                "Finished",
-//                                Toast.LENGTH_LONG).show();
-//                    }
-//                });
-//
-//            } catch (IOException e) {
-//
-//                e.printStackTrace();
-//
-//                final String eMsg = "Something wrong: " + e.getMessage();
-//                WifiActivity.this.runOnUiThread(new Runnable() {
-//
-//                    @Override
-//                    public void run() {
-//                        Toast.makeText(WifiActivity.this,
-//                                eMsg,
-//                                Toast.LENGTH_LONG).show();
-//                    }
-//                });
-//
-//            } finally {
-//                if (socket != null) {
-//                    try {
-//                        socket.close();
-//                    } catch (IOException e) {
-//                        // TODO Auto-generated catch block
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//            runOnUiThread(new Runnable() {
-//                public void run() {
-//                    if (mProgressDialog != null && mProgressDialog.isShowing()) {
-//                        mProgressDialog.dismiss();
-//                    }
-//                }
-//            });
-//
-////            try {
-////                Log.e("Data","Reading");
-////                String data = downloadDataFromSender("http://"+dstAddress+":"+dstPort);
-////                Log.e("Data read", data);
-////            } catch (IOException e) {
-////                e.printStackTrace();
-////            }
-//        }
-
         @Override
         public void run() {
             readData();
-//            int file_no;
-//            List<File> fileList = new ArrayList<>();
-//            Socket socket = null;
-//            try {
-//                socket = new Socket(dstAddress, dstPort);
-//                DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-//                int num = dis.readInt();
-//                Log.e("Number of forms" , num + " ");
-//                ArrayList<String> formsReceived = new ArrayList<>();
-//                while (num-- > 0) {
-//                    file_no = dis.readInt();
-//                    Log.e("FILE ", file_no+"");
-//                    fileList.clear();
-//                    while(file_no-- > 0) {
-//                        String filename = dis.readUTF();
-//                        long fileSize = dis.readLong();
-//                        File newFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + filename);
-//                        newFile.createNewFile();
-//                        FileOutputStream fos = new FileOutputStream(newFile);
-//                        int n;
-//                        byte buf[] = new byte[4096];
-//                        while (fileSize > 0 && (n = dis.read(buf, 0, (int) Math.min(buf.length, fileSize))) != -1) {
-//                            fos.write(buf, 0, n);
-//                            fileSize -= n;
-//                        }
-//                        fos.close();
-//                        fileList.add(newFile);
-//                        Log.d("File created", filename);
-//                    }
-//                }
-//                WifiActivity.this.runOnUiThread(new Runnable() {
-//
-//                    @Override
-//                    public void run() {
-//                        Toast.makeText(WifiActivity.this,
-//                                "Finished",
-//                                Toast.LENGTH_LONG).show();
-//                    }
-//                });
-//                runOnUiThread(new Runnable() {
-//                    public void run() {
-//                        if (mProgressDialog != null && mProgressDialog.isShowing()) {
-//                            mProgressDialog.dismiss();
-//                        }
-//                    }
-//                });
-//
-//
-//            } catch (IOException e) {
-//                dismissDialog(DIALOG_DOWNLOAD_PROGRESS);
-//                e.printStackTrace();
-//
-//                final String eMsg = "Something wrong: " + e.getMessage();
-//                WifiActivity.this.runOnUiThread(new Runnable() {
-//
-//                    @Override
-//                    public void run() {
-//                        Toast.makeText(WifiActivity.this,
-//                                eMsg,
-//                                Toast.LENGTH_LONG).show();
-//                    }
-//                });
-//                // Connection Interrupted
-//                // Make sure to remove each resource for forms which are received incomplete
-//                for(File file : fileList){
-//                    Log.d(TAG,"==Delete " + file.getName() + " " + file.delete());
-//                }
-//            }finally {
-//                try {
-//                    socket.close();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
         }
 
         private void readData() {
@@ -397,16 +230,16 @@ public class WifiActivity extends AppCompatActivity implements View.OnClickListe
                 socket = new Socket(dstAddress, dstPort);
                 DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
                 int num = dis.readInt();
-                Log.e("Number of forms" , num + " ");
+                Log.e("Number of forms", num + " ");
                 while (num-- > 0) {
                     file_no = dis.readInt();
-                    Log.e("FILE ", file_no+"");
+                    Log.e("FILE ", file_no + "");
                     fileList.clear();
                     boolean checkFormName = false;
-                    while(file_no-- > 0) {
+                    while (file_no-- > 0) {
                         String filename = dis.readUTF();
-                        Log.e("File",filename);
-                        if(!checkFormName) {
+                        Log.e("File", filename);
+                        if (!checkFormName) {
                             checkFormName = true;
                             filesDownloaded.add(filename);
                             Log.e("LIST", filesDownloaded + " " + filesDownloaded.size());
@@ -459,15 +292,15 @@ public class WifiActivity extends AppCompatActivity implements View.OnClickListe
                 });
                 // Connection Interrupted
                 // Make sure to remove each resource for forms which are received incomplete
-                for(File file : fileList){
-                    if(dialogMessage == null) {
+                for (File file : fileList) {
+                    if (dialogMessage == null) {
                         dialogMessage = "Files Deleted : " + file.getName() + "\n";
-                    }else {
+                    } else {
                         dialogMessage += file.getName();
                     }
-                    Log.d(TAG,"==Delete " + file.getName() + " " + file.delete());
+                    Log.d(TAG, "==Delete " + file.getName() + " " + file.delete());
                 }
-            }finally {
+            } finally {
                 dismissDialog(DIALOG_DOWNLOAD_PROGRESS);
                 try {
                     socket.close();
@@ -476,16 +309,16 @@ public class WifiActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
             boolean messageDownload = false;
-            for(String name : filesDownloaded) {
-                if(dialogMessage == null) {
+            for (String name : filesDownloaded) {
+                if (dialogMessage == null) {
                     messageDownload = true;
                     dialogMessage = "Files Downloaded : ";
-                }else if(!messageDownload) {
+                } else if (!messageDownload) {
                     messageDownload = true;
                     dialogMessage = "\nFiles Downloaded : ";
                 }
                 dialogMessage += name + " ";
-                Log.e("Message " , dialogMessage);
+                Log.e("Message ", dialogMessage);
 
             }
             final String finalDialogMessage = dialogMessage;
@@ -544,7 +377,7 @@ public class WifiActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void showAlertDialog(Context context, String message){
+    private void showAlertDialog(Context context, String message) {
         AlertDialog.Builder builder1 = new AlertDialog.Builder(context);
         builder1.setMessage(message);
         builder1.setCancelable(true);

@@ -3,7 +3,6 @@ package com.dexter.bluetoothp2p.wifi;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.os.Environment;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,21 +11,14 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.dexter.bluetoothp2p.MainActivity;
 import com.dexter.bluetoothp2p.ProgressListener;
 import com.dexter.bluetoothp2p.R;
-import com.dexter.bluetoothp2p.SendActivity;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class HotspotActivity extends AppCompatActivity  implements ProgressListener  {
+public class HotspotActivity extends AppCompatActivity implements ProgressListener {
 
 
     private final String TAG = this.getClass().getName();
@@ -65,36 +57,6 @@ public class HotspotActivity extends AppCompatActivity  implements ProgressListe
                         Toast.LENGTH_LONG).show();
                 serverSocketThread = new ServerSocketThread();
                 serverSocketThread.start();
-//                try {
-//                    serverSocket = new ServerSocket(SocketServerPORT);
-//                    while (true) {
-//
-//                        socket = serverSocket.accept();
-//                        HotspotActivity.this.runOnUiThread(new Runnable() {
-//
-//                            @Override
-//                            public void run() {
-//                                Toast.makeText(HotspotActivity.this,
-//                                        "Connection Accepted",
-//                                        Toast.LENGTH_LONG).show();
-//                            }});
-//                        // start task
-//                        WifiSendTask sendTask = new WifiSendTask(socket);
-//                        sendTask.execute(instancesToSend);
-//                    }
-//                } catch (IOException e) {
-//                    // TODO Auto-generated catch block
-//                    e.printStackTrace();
-//                } finally {
-//                    if (socket != null) {
-//                        try {
-//                            socket.close();
-//                        } catch (IOException e) {
-//                            // TODO Auto-generated catch block
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                }
 
             }
         });
@@ -157,8 +119,6 @@ public class HotspotActivity extends AppCompatActivity  implements ProgressListe
                             showDialog(PROGRESS_DIALOG);
                         }
                     });
-//                    FileTxThread fileTxThread = new FileTxThread(socket);
-//                    fileTxThread.start();
                     WifiSendTask sendTask = new WifiSendTask(socket);
                     sendTask.setUploaderListener(HotspotActivity.this);
                     sendTask.execute(instancesToSend);
@@ -178,59 +138,6 @@ public class HotspotActivity extends AppCompatActivity  implements ProgressListe
             }
         }
 
-    }
-
-    public class FileTxThread extends Thread {
-        Socket socket;
-
-        FileTxThread(Socket socket) {
-            this.socket = socket;
-        }
-
-        @Override
-        public void run() {
-            File file = new File(
-                    Environment.getExternalStorageDirectory(),
-                    "test.txt");
-
-            byte[] bytes = new byte[(int) file.length()];
-            BufferedInputStream bis;
-            try {
-                bis = new BufferedInputStream(new FileInputStream(file));
-                bis.read(bytes, 0, bytes.length);
-                OutputStream os = socket.getOutputStream();
-                os.write(bytes, 0, bytes.length);
-                os.flush();
-                socket.close();
-
-                final String sentMsg = "File sent to: " + socket.getInetAddress();
-                HotspotActivity.this.runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        Toast.makeText(HotspotActivity.this,
-                                sentMsg,
-                                Toast.LENGTH_LONG).show();
-                        dismissDialog(PROGRESS_DIALOG);
-                    }
-                });
-
-            } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } finally {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-
-        }
     }
 
     @Override

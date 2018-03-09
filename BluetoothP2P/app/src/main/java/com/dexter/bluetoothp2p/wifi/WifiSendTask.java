@@ -1,6 +1,5 @@
 package com.dexter.bluetoothp2p.wifi;
 
-import android.bluetooth.BluetoothSocket;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -30,8 +29,6 @@ public class WifiSendTask extends AsyncTask<Long, Integer, String> {
     ProgressListener stateListener;
     private static final String TAG = "InstanceSendTask";
 
-    String dstAddress;
-    int dstPort;
 
     Socket socket;
 
